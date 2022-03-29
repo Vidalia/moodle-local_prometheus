@@ -42,7 +42,7 @@ function format_prometheus_lines(string $type, string $metricName, $value, array
         $items = [];
         array_walk($labels, function($value, $name) use (&$items) {
             $value = addslashes($value);
-            $items[] = "\"$name\"=\"$value\"";
+            $items[] = "$name=\"$value\"";
         });
 
         $labelString = '{' . implode(',', $items) . '}';
