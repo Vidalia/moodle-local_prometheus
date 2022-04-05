@@ -79,26 +79,26 @@ SELECT	MAX(usr.id),
         auth,
         (
             SELECT	COUNT('x')
-            FROM	moodle.mdl_user
+            FROM	{user}
             WHERE	auth = usr.auth
                 AND	deleted = 0
                 AND	suspended = 0
         ) AS active,
         (
             SELECT	COUNT('x')
-            FROM	moodle.mdl_user
+            FROM	{user}
             WHERE	auth = usr.auth
                 AND	deleted = 1
                 AND	suspended = 0
         ) AS deleted,
         (
             SELECT	COUNT('x')
-            FROM	moodle.mdl_user
+            FROM	{user}
             WHERE	auth = usr.auth
                 AND	deleted = 0
                 AND	suspended = 1
         ) AS suspended
-FROM	moodle.mdl_user usr
+FROM	{user} usr
 GROUP BY auth");
 
     foreach($data as $item) {
@@ -172,7 +172,7 @@ SELECT	id,
     (
         SELECT	COUNT('x')
         FROM	{user_enrolments} user_enrol
-            INNER JOIN moodle.mdl_enrol enrol
+            INNER JOIN {enrol} enrol
                 ON	enrol.id = user_enrol.enrolid
         WHERE	enrol.enrol = enrol.enrol
             AND	user_enrol.status = 0
@@ -180,7 +180,7 @@ SELECT	id,
     (
         SELECT	COUNT('x')
         FROM	{user_enrolments} user_enrol
-            INNER JOIN moodle.mdl_enrol enrol
+            INNER JOIN {enrol} enrol
                 ON	enrol.id = user_enrol.enrolid
         WHERE	enrol.enrol = out.enrol
             AND	user_enrol.status = 1
@@ -274,7 +274,7 @@ SELECT	0,
 		edulevel,
 		origin,
 		COUNT('x') as items
-FROM	moodle.mdl_logstore_standard_log
+FROM	{logstore_standard_log}
 WHERE   timecreated > ?
 GROUP BY component, crud, edulevel, origin",
     [ $cutoff ]);
