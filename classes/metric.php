@@ -31,11 +31,15 @@ use moodle_exception;
  */
 class metric implements Iterator {
 
+    /**
+     * A single monotonically increasing counter. Value may only ever increase, or be reset to 0.
+     */
     const TYPE_COUNTER = "counter";
+
+    /**
+     * Metric represents a single numerical value that can go up or down.
+     */
     const TYPE_GAUGE = "gauge";
-    const TYPE_HISTOGRAM = "histogram";
-    const TYPE_SUMMARY = "summary";
-    const TYPE_UNTYPED = "untyped";
 
     /**
      * @var string Metric name
