@@ -21,8 +21,7 @@ use Iterator;
 use moodle_exception;
 
 /**
- * Represents a metric with one or more dimensions.
- * A Metric is a general feature of a system that is measured.
+ * A single measurable feature of the application.
  *
  * @package     local_prometheus
  * @copyright   2023 University of Essex
@@ -153,6 +152,8 @@ class metric implements Iterator {
     }
 
     /**
+     * Fetch the value at the current pointer.
+     *
      * @return metric_value
      */
     public function current(): metric_value {
@@ -160,6 +161,8 @@ class metric implements Iterator {
     }
 
     /**
+     * Increment the pointer to the next value.
+     *
      * @return void
      */
     public function next() {
@@ -167,6 +170,8 @@ class metric implements Iterator {
     }
 
     /**
+     * Return the value of the pointer.
+     *
      * @return int
      */
     public function key(): int {
@@ -174,6 +179,8 @@ class metric implements Iterator {
     }
 
     /**
+     * Tests whether the pointer is at a valid item in the iterable.
+     *
      * @return bool
      */
     public function valid(): bool {
@@ -181,6 +188,8 @@ class metric implements Iterator {
     }
 
     /**
+     * Resets the pointer to the beginning of the iterable.
+     *
      * @return void
      */
     public function rewind() {
