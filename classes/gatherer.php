@@ -48,6 +48,7 @@ class gatherer {
      * Gather metrics from all plugins that support it.
      * We dogfood the prometheus_get_metrics hook in our own lib.php file
      *
+     * @param int $window The window for fetching 'recent' or 'current' metrics
      * @return metric[] Metrics
      */
     final protected function get_metrics(int $window): array {
