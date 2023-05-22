@@ -25,49 +25,56 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-global $CFG;
+global $CFG, $ADMIN;
 
-if($hassiteconfig) {
+if ($hassiteconfig) {
 
     $settings = new admin_settingpage('local_prometheus', get_string('pluginname', 'local_prometheus'));
 
-    $existingToken = get_config('local_prometheus', 'token');
-    if(empty($existingToken))
-        $existingToken = base64_encode(md5(mt_rand()));
+    $existingtoken = get_config('local_prometheus', 'token');
+    if (empty($existingtoken)) {
+        $existingtoken = base64_encode(md5(mt_rand()));
+    }
 
-    $tokenUrl = new moodle_url('/local/prometheus/metrics.php',
-        [ 'token' => $existingToken ]
+    $tokenurl = new moodle_url('/local/prometheus/metrics.php',
+        [ 'token' => $existingtoken ]
     );
 
-    $timeframeUrl = new moodle_url($tokenUrl,
+    $timeframeurl = new moodle_url($tokenurl,
         [ 'timeframe' => 3600 ]
     );
 
     $params = [
-        'tokenurl' => $tokenUrl->out(),
-        'timeframeurl' => $timeframeUrl->out()
+        'tokenurl' => $tokenurl->out(),
+        'timeframeurl' => $timeframeurl->out()
     ];
     $settings->add(new admin_setting_description('local_prometheus_usage', '',
         get_string('usage', 'local_prometheus', $params)
     ));
 
-    // Authentication options
+    // Authentication options.
     $settings->Add(new admin_setting_heading('local_prometheus_auth',
         get_string('heading:auth', 'local_prometheus'),
         get_string('heading:auth:information', 'local_prometheus')
     ));
 
-    $tokenInput = new admin_setting_configtext('local_prometheus/token',
+    $tokeninput = new admin_setting_configtext('local_prometheus/token',
         get_string('token', 'local_prometheus'),
         get_string('token:description', 'local_prometheus', base64_encode(md5(mt_rand()))),
-        $existingToken
+        $existingtoken
     );
-    $settings->add($tokenInput);
+    $settings->add($tokeninput);
 
-    // Output option settings
+    // Output option settings.
     $settings->add(new admin_setting_heading('local_prometheus_outputs',
         get_string('heading:outputs', 'local_prometheus'),
         get_string('heading:outputs:information', 'local_prometheus')
+    ));
+
+    $settings->add(new admin_setting_configtextarea('local_prometheus/extratags',
+        get_string('extratags', 'local_prometheus'),
+        get_string('extratags:description', 'local_prometheus'),
+        ''
     ));
 
     $checkboxes = [
@@ -81,19 +88,13 @@ if($hassiteconfig) {
         'activitystatistics' => true
     ];
 
-    foreach($checkboxes as $key => $default) {
+    foreach ($checkboxes as $key => $default) {
         $settings->add(new admin_setting_configcheckbox("local_prometheus/$key",
             get_string($key, 'local_prometheus'),
             get_string("$key:description", 'local_prometheus'),
             $default ? '1' : '0'
         ));
     }
-
-    $settings->add(new admin_setting_configtextarea('local_prometheus/extratags',
-        get_string('extratags', 'local_prometheus'),
-        get_string('extratags:description', 'local_prometheus'),
-        ''
-    ));
 
     $ADMIN->add('localplugins', $settings);
 }
