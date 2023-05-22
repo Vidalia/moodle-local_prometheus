@@ -25,6 +25,7 @@
 
 use local_prometheus\gatherer;
 
+// phpcs:ignore moodle.Files.RequireLogin.Missing
 require_once(__DIR__ . '/../../config.php');
 require_once(__DIR__ . '/locallib.php');
 
