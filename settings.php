@@ -53,7 +53,7 @@ if ($hassiteconfig) {
     ));
 
     // Authentication options.
-    $settings->Add(new admin_setting_heading('local_prometheus_auth',
+    $settings->add(new admin_setting_heading('local_prometheus_auth',
         get_string('heading:auth', 'local_prometheus'),
         get_string('heading:auth:information', 'local_prometheus')
     ));
