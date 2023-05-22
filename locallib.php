@@ -14,67 +14,325 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
-const PROMETHEUS_TYPE_COUNTER = "counter";
-const PROMETHEUS_TYPE_GAUGE = "gauge";
-const PROMETHEUS_TYPE_HISTOGRAM = "histogram";
-const PROMETHEUS_TYPE_SUMMARY = "summary";
-const PROMETHEUS_TYPE_UNTYPED = "untyped";
+/**
+ * Local library functions
+ *
+ * @package     local_prometheus
+ * @copyright   2023 University of Essex
+ * @author      John Maydew <jdmayd@essex.ac.uk>
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
+use local_prometheus\metric;
+use local_prometheus\metric_value;
 
 /**
- * Formats a single metric into the Prometheus exposition format
- * @param string $type Metric type (See PROMETHEUS_TYPE_* consts)
- * @param string $metricName The metric's name
- * @param mixed $value Metric's value
- * @param array $labels An array of key/value pairs to include as labels
- * @param string $help Metric description
- * @param int|null $timestamp Timestamp (optional)
- * @return string The formatted metric
+ * Fetch user statistics metric
+ *
+ * @param int $window How far back to look for 'current' data
+ * @return metric[]
+ * @throws dml_exception
  */
-function format_prometheus_lines(string $type, string $metricName, $value, array $labels = [], string $help = '', int $timestamp = null): string {
+function local_prometheus_get_userstatistics(int $window): array {
+    global $DB;
 
-    // HELP and TYPE metrics should only be output once per metric
-    // TODO: This doesn't work for the histogram or summary types, but we don't use them anyway
-    static $outputtedMetrics = [];
+    // Grab data about currently online users (within the last window period).
+    $onlinemetric = new metric(
+        'moodle_users_online',
+        metric::TYPE_GAUGE,
+        get_string('metric:onlineusers', 'local_prometheus')
+    );
 
-    // Format labels
-    $labelString = "";
-    if(!empty($labels)) {
-        $items = [];
-        array_walk($labels, function($value, $name) use (&$items) {
-            $value = addslashes($value);
-            $items[] = "$name=\"$value\"";
-        });
+    $currentlyonline = $DB->count_records_select('user', 'lastaccess > ?', [ $window ]);
+    $onlinemetric->add_value(
+        new metric_value([], $currentlyonline)
+    );
 
-        $labelString = '{' . implode(',', $items) . '}';
+    // Grab data about currently active users.
+    $activedata = $DB->get_records_sql("
+        SELECT	MAX(usr.id),
+                auth,
+                (
+                    SELECT	COUNT('x')
+                    FROM	{user}
+                    WHERE	auth = usr.auth
+                        AND	deleted = 0
+                        AND	suspended = 0
+                ) AS active,
+                (
+                    SELECT	COUNT('x')
+                    FROM	{user}
+                    WHERE	auth = usr.auth
+                        AND	deleted = 1
+                        AND	suspended = 0
+                ) AS deleted,
+                (
+                    SELECT	COUNT('x')
+                    FROM	{user}
+                    WHERE	auth = usr.auth
+                        AND	deleted = 0
+                        AND	suspended = 1
+                ) AS suspended
+        FROM	{user} usr
+        GROUP BY auth");
+
+    $activemetric = new metric(
+        'moodle_users_active',
+        metric::TYPE_GAUGE,
+        get_string('metric:activeusers', 'local_prometheus')
+    );
+    $deletedmetric = new metric(
+        'moodle_users_deleted',
+        metric::TYPE_GAUGE,
+        get_string('metric:deletedusers', 'local_prometheus')
+    );
+    $suspendedmetric = new metric(
+        'moodle_users_suspended',
+        metric::TYPE_GAUGE,
+        get_string('metric:suspendedusers', 'local_prometheus')
+    );
+
+    foreach ($activedata as $item) {
+        $labels = [ 'auth' => $item->auth ];
+
+        $activemetric->add_value(new metric_value($labels, $item->active));
+        $deletedmetric->add_value(new metric_value($labels, $item->deleted));
+        $suspendedmetric->add_value(new metric_value($labels, $item->suspended));
     }
-    $valueString = " $value";
 
-    // Append timestamp, if supplied
-    $timestampString = is_int($timestamp)
-        ? " $timestamp"
-        : '';
+    return [ $onlinemetric, $activemetric, $deletedmetric, $suspendedmetric ];
+}
 
-    $return = "";
+/**
+ * Fetch course statistics metrics
+ *
+ * @param int $window How far back to look for 'current' data
+ * @return metric[]
+ * @throws dml_exception
+ */
+function local_prometheus_get_coursestatistics(int $window): array {
+    global $DB;
 
-    // Prepend # HELP comment
-    if(!in_array($metricName, $outputtedMetrics)) {
-        if(!empty($outputtedMetrics)) {
-            $return .= "\n\n";
-        }
-        if(!empty($help)) {
-            $return .= "# HELP $metricName $help\n";
-        }
+    $coursedata = $DB->get_records_sql("
+SELECT	MAX(course.id),
+        format,
+		theme,
+		(
+			SELECT	COUNT('x')
+			FROM	{course}
+			WHERE	format = course.format
+				AND	theme = course.theme
+				AND visible = 0
+		) AS hidden,
+		(
+			SELECT	COUNT('x')
+			FROM	{course}
+			WHERE	format = course.format
+                AND	theme = course.theme
+                AND visible = 1
+		) AS visible
+FROM	{course} course
+GROUP BY format, theme");
 
-        // Add # TYPE comment
-        $return .= "# TYPE $metricName $type\n";
+    $visiblemetric = new metric(
+        'moodle_courses_visible',
+        metric::TYPE_GAUGE,
+        get_string('metric:coursesvisible', 'local_prometheus')
+    );
+    $hiddenmetric = new metric(
+        'moodle_courses_hidden',
+        metric::TYPE_GAUGE,
+        get_string('metric:courseshidden', 'local_prometheus')
+    );
 
-        $outputtedMetrics[] = $metricName;
+    foreach ($coursedata as $item) {
+        $labels = [
+            'theme' => $item->theme,
+            'format' => $item->format
+        ];
+
+        $visiblemetric->add_value(new metric_value($labels, $item->visible));
+        $hiddenmetric->add_value(new metric_value($labels, $item->hidden));
     }
 
-    // Append all the different parts together
-    $return .= implode('', [
-        $metricName, $labelString, $valueString, $timestampString, "\n"
-    ]);
+    return [ $visiblemetric, $hiddenmetric ];
+}
 
-    return $return;
+/**
+ * Get statistics about course enrolments
+ * NB: Course IDs aren't included in labels as this would generally cause a very high
+ * cardinality for any site with a large number of courses.
+ *
+ * @param int $window
+ * @return metric[]
+ * @throws dml_exception
+ */
+function local_prometheus_get_enrolstatistics(int $window): array {
+    global $DB;
+
+    $data = $DB->get_records_sql("
+SELECT	max(id),
+        enrol,
+    (
+        SELECT	COUNT('x')
+        FROM	{enrol} enrol
+        WHERE	enrol.enrol = outenrol.enrol
+            AND	status = 1
+    ) AS disabled,
+    (
+        SELECT	COUNT('x')
+        FROM	{enrol} enrol
+        WHERE	enrol.enrol = outenrol.enrol
+            AND	status = 0
+    ) AS enabled,
+    (
+        SELECT	COUNT('x')
+        FROM	{user_enrolments} user_enrol
+            INNER JOIN {enrol} enrol
+                ON	enrol.id = user_enrol.enrolid
+        WHERE	enrol.enrol = outenrol.enrol
+            AND	user_enrol.status = 0
+    ) AS active_enrolments,
+    (
+        SELECT	COUNT('x')
+        FROM	{user_enrolments} user_enrol
+            INNER JOIN {enrol} enrol
+                ON	enrol.id = user_enrol.enrolid
+        WHERE	enrol.enrol = outenrol.enrol
+            AND	user_enrol.status = 1
+    ) AS suspended_enrolments
+FROM	{enrol} outenrol
+GROUP BY enrol");
+
+    $enabledmetric = new metric(
+        'moodle_enrolments_enabled',
+        metric::TYPE_GAUGE,
+        get_string('metric:enrolsenabled', 'local_prometheus')
+    );
+    $disabledmetric = new metric(
+        'moodle_enrolments_disabled',
+        metric::TYPE_GAUGE,
+        get_string('metric:enrolsdisabled', 'local_prometheus')
+    );
+    $activemetric = new metric(
+        'moodle_enrolments_active',
+        metric::TYPE_GAUGE,
+        get_string('metric:enrolsactive', 'local_prometheus')
+    );
+    $suspendedmetric = new metric(
+        'moodle_enrolments_suspended',
+        metric::TYPE_GAUGE,
+        get_string('metric:enrolssuspended', 'local_prometheus')
+    );
+
+    foreach ($data as $item) {
+        $label = [ 'enrol' => $item->enrol ];
+
+        $enabledmetric->add_value(new metric_value($label, $item->enabled));
+        $disabledmetric->add_value(new metric_value($label, $item->disabled));
+        $activemetric->add_value(new metric_value($label, $item->active_enrolments));
+        $suspendedmetric->add_value(new metric_value($label, $item->suspended_enrolments));
+    }
+
+    return [ $enabledmetric, $disabledmetric, $activemetric, $suspendedmetric ];
+}
+
+/**
+ * Get activity module usage statistics
+ *
+ * @param int $window
+ * @return metric[]
+ * @throws dml_exception
+ */
+function local_prometheus_get_modulestatistics(int $window): array {
+    global $DB;
+
+    $data = $DB->get_records_sql("
+SELECT	id,
+        name,
+        (
+            SELECT	COUNT('x')
+            FROM	{course_modules} course_module
+            WHERE	course_module.module = module.id
+                AND	deletioninprogress = 0
+                AND course_module.visible = 1
+        ) AS visible,
+        (
+            SELECT	COUNT('x')
+            FROM	{course_modules} course_module
+            WHERE	course_module.module = module.id
+                AND	deletioninprogress = 0
+                AND course_module.visible = 0
+        ) AS hidden
+FROM	{modules} module
+GROUP BY module.name, module.id");
+
+    $visiblemetric = new metric(
+        'moodle_modules_visible',
+        metric::TYPE_GAUGE,
+        get_string('metric:modulesvisible', 'local_prometheus')
+    );
+    $hiddenmetric = new metric(
+        'moodle_modules_hidden',
+        metric::TYPE_GAUGE,
+        get_string('metric:moduleshidden', 'local_prometheus')
+    );
+
+    foreach ($data as $item) {
+        $label = [ 'module' => $item->name ];
+
+        $visiblemetric->add_value(new metric_value($label, $item->visible));
+        $hiddenmetric->add_value(new metric_value($label, $item->hidden));
+    }
+
+    return [ $visiblemetric, $hiddenmetric ];
+}
+
+/**
+ * Get task statistics
+ *
+ * @param int $window
+ * @return metric[]
+ * @throws dml_exception
+ */
+function local_prometheus_get_taskstatistics(int $window): array {
+    global $DB;
+
+    $tasks = $DB->get_records_sql("
+SELECT	MAX(id),
+        type,
+        component,
+        classname,
+        hostname,
+        COUNT('x') AS runs,
+        SUM(result) AS failures
+FROM	{task_log}
+WHERE   timeend > ?
+GROUP BY component, classname, hostname, type",
+        [ $window ]);
+
+    $runmetric = new metric(
+        'moodle_task_runs',
+        metric::TYPE_GAUGE,
+        get_string('metric:taskruns', 'local_prometheus')
+    );
+    $failuremetric = new metric(
+        'moodle_task_failures',
+        metric::TYPE_GAUGE,
+        get_string('metric:taskfailures', 'local_prometheus')
+    );
+
+    foreach ($tasks as $task) {
+        $labels = [
+            'type' => $task->type == 1 ? 'adhoc' : 'scheduled',
+            'component' => $task->component,
+            'classname' => $task->classname,
+            'hostname' => $task->hostname
+        ];
+
+        $runmetric->add_value(new metric_value($labels, $task->runs));
+        $failuremetric->add_value(new metric_value($labels, $task->failures));
+    }
+
+    return [ $runmetric, $failuremetric ];
 }

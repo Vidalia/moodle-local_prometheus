@@ -17,9 +17,10 @@
 /**
  * Language strings
  *
- * @package   local_prometheus
- * @copyright 2022 John Maydew <jdmayd@essex.ac.uk>
- * @license   2022 University of Essex
+ * @package     local_prometheus
+ * @copyright   2023 University of Essex
+ * @author      John Maydew <jdmayd@essex.ac.uk>
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 $string['pluginname'] = 'Prometheus reporting endpoint';
@@ -63,6 +64,10 @@ $string['metric:deletedusers'] = 'Number of deleted users';
 $string['metric:suspendedusers'] = 'Number of suspended users';
 $string['metric:coursesvisible'] = 'Number of courses visible to students';
 $string['metric:courseshidden'] = 'Number of courses hidden from students';
+$string['metric:enrolsenabled'] = 'Number of enabled enrolment instances';
+$string['metric:enrolsdisabled'] = 'Number of disabled enrolment instances';
+$string['metric:enrolsactive'] = 'Number of active user enrolments';
+$string['metric:enrolssuspended'] = 'Number of suspended user enrolments';
 $string['metric:modulesvisible'] = 'Number of activity modules currently visible to students';
 $string['metric:moduleshidden'] = 'Number of activity modules hidden from students';
 $string['metric:taskruns'] = 'Number of tasks that completed successfully';

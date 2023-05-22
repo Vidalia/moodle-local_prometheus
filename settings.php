@@ -17,9 +17,10 @@
 /**
  * Prometheus reporting plugin settings and presets
  *
- * @package local_prometheus
- * @copyright 2022 John Maydew <jdmayd@essex.ac.uk>
- * @license 2022 University of Essex
+ * @package     local_prometheus
+ * @copyright   2023 University of Essex
+ * @author      John Maydew <jdmayd@essex.ac.uk>
+ * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();

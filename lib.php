@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Prometheus reporting endpoint for Moodle
+ * Shared library functions
  *
  * @package     local_prometheus
  * @copyright   2023 University of Essex
@@ -23,9 +23,40 @@
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use local_prometheus\metric;
+
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2023052200;        // The current plugin version (Date: YYYYMMDDXX)
-$plugin->requires  = 2019051100;        // Requires this Moodle version
-$plugin->component = 'local_prometheus';  // Full name of the plugin (used for diagnostics)
-$plugin->release   = 'v1.1.0';
+require_once("locallib.php");
+
+/**
+ * Grab a default set of metrics
+ *
+ * @param int $window How far back from the current time to look
+ * @return metric[]
+ * @throws dml_exception
+ */
+function local_prometheus_prometheus_get_metrics(int $window): array {
+    $config = get_config('local_prometheus');
+
+    $metrics = [];
+
+    if ($config->userstatistics) {
+        $metrics[] = local_prometheus_get_userstatistics($window);
+    }
+
+    if ($config->coursestatistics) {
+        $metrics[] = local_prometheus_get_coursestatistics($window);
+        $metrics[] = local_prometheus_get_enrolstatistics($window);
+    }
+
+    if ($config->modulestatistics) {
+        $metrics[] = local_prometheus_get_modulestatistics($window);
+    }
+
+    if ($config->taskstatistics) {
+        $metrics[] = local_prometheus_get_taskstatistics($window);
+    }
+
+    return array_merge(...$metrics);
+}
