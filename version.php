@@ -25,7 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2023052200;        // The current plugin version (Date: YYYYMMDDXX)
-$plugin->requires  = 2019051100;        // Requires this Moodle version
-$plugin->component = 'local_prometheus';  // Full name of the plugin (used for diagnostics)
+$plugin->version   = 2023052200;
+$plugin->requires  = 2019051100;
+$plugin->component = 'local_prometheus';
 $plugin->release   = 'v1.1.0';
