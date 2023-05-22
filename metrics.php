@@ -15,8 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Publicly accessible endpoint that displays Moodle
- * metrics in the Prometheus data format
+ * Publicly accessible endpoint for displaying metrics
  *
  * @package     local_prometheus
  * @copyright   2023 University of Essex
