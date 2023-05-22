@@ -37,7 +37,9 @@ mod_example_prometheus_get_metrics(int $window): array {
 ```
 
 ## Installation
-The plugin requires Moodle 4.0 or later.
+The plugin requires Moodle 3.9 or later, and PHP 7.4 or later. You will also need some way of gathering, storing, and
+using the metrics that the plugin generates.
+
 There's no special installation steps or instructions, just install it as you would any other plugin
 
 ### Install from Moodle.org
