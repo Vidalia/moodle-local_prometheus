@@ -88,7 +88,7 @@ class metric_value {
             // Format the labels as key="value", and join them with a comma.
             $formattedlabels = array_map(
                 function(string $name, string $value): string {
-                    return "$name=\"$value\"";
+                    return "$name=\"" . addslashes($value) ."\"";
                 },
                 array_keys($alllabels),
                 array_values($alllabels)

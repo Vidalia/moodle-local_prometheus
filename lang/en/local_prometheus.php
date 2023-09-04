@@ -26,7 +26,7 @@
 $string['pluginname'] = 'Prometheus reporting endpoint';
 
 $string['token'] = 'Authentication token';
-$string['token:description'] = 'Provided as a URL parameter to prevent unauthorized access. Leave blank to disable authentication.<br />Replace with any base64-string, or use this: <code>{$a}</code>.';
+$string['token:description'] = 'Provided as a URL parameter to prevent unauthorized access. Leave blank to disable authentication.<br />Replace with any base64-string, or use this: <code>{$a}</code>';
 
 $string['usage'] = '<p>Point Prometheus or an InfluxDB v2 scraper to the following endpoint:<br />' .
     '<a href="{$a->tokenurl}" target="_blank">{$a->tokenurl}</a></p>' .

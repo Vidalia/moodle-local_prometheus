@@ -25,7 +25,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2023052200;
+$plugin->version   = 2023090400;
 $plugin->requires  = 2019051100;
 $plugin->component = 'local_prometheus';
-$plugin->release   = 'v1.1.0';
+$plugin->release   = 'v1.1.1';
