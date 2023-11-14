@@ -133,6 +133,6 @@ class gatherer {
                     $metrics
                 )
             )
-        );
+        ) . PHP_EOL;
     }
 }
