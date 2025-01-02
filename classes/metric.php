@@ -88,8 +88,8 @@ class metric implements Iterator {
      * @throws coding_exception
      * @return void
      */
-    final public static function validate_name(string $name) {
-        if (preg_match("/[a-zA-Z_:][a-zA-Z0-9_:]*/", $name)) {
+    final public static function validate_name(string $name): void {
+        if (preg_match("/^[a-zA-Z_:][a-zA-Z0-9_:]*$/", $name)) {
             return;
         }
 
@@ -120,7 +120,7 @@ class metric implements Iterator {
      * @param metric_value $dimension
      * @return void
      */
-    final public function add_value(metric_value $dimension) {
+    final public function add_value(metric_value $dimension): void {
         $this->dimensions[] = $dimension;
     }
 
@@ -129,7 +129,6 @@ class metric implements Iterator {
      *
      * @param array $sharedlabels List of shared labels for all values
      * @return string
-     * @throws moodle_exception
      */
     public function output(array $sharedlabels = []): string {
 
@@ -165,7 +164,7 @@ class metric implements Iterator {
      *
      * @return void
      */
-    public function next() {
+    public function next(): void {
         $this->pointer++;
     }
 
@@ -192,7 +191,7 @@ class metric implements Iterator {
      *
      * @return void
      */
-    public function rewind() {
+    public function rewind(): void {
         $this->pointer = 0;
     }
 }

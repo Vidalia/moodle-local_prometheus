@@ -64,10 +64,10 @@ class metric_value {
      *
      * @param array $labels An array of name => value labels
      */
-    final public static function validate_labels(array $labels) {
+    final public static function validate_labels(array $labels): void {
 
         foreach ($labels as $name => $value) {
-            if (!preg_match("/[a-zA-Z_][a-zA-Z0-9_]*/", $name)) {
+            if (!preg_match("/^[a-zA-Z_][a-zA-Z0-9_]*$/", $name)) {
                 throw new coding_exception('Invalid label name', "'$name' does not match regex");
             }
         }
