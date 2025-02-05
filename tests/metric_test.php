@@ -77,7 +77,7 @@ final class metric_test extends basic_testcase {
      * @param string $type Metric type
      * @param string $help Optional help text
      * @param metric_value[] $values List of values
-     * @param array{string: string} $labels Shared labels
+     * @param array $labels Shared labels
      * @param string $expected Expected output
      * @return void
      */
@@ -89,7 +89,9 @@ final class metric_test extends basic_testcase {
                                        string $expected): void {
 
         $metric = new metric($name, $type, $help);
-        array_walk($values, $metric->add_value(...));
+        foreach ($values as $value) {
+            $metric->add_value($value);
+        }
 
         // Line endings are significant. We want to be able to see the line endings in the dataprovider,
         // but we don't want to faff about mixing ending types in the same file.

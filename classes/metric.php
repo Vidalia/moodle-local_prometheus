@@ -135,7 +135,7 @@ class metric implements Iterator {
     /**
      * Formats the metric to be output as a string
      *
-     * @param array{string: string} $sharedlabels List of shared labels for all values
+     * @param array $sharedlabels List of shared labels for all values
      * @return string
      */
     public function output(array $sharedlabels = []): string {
