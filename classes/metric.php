@@ -18,7 +18,6 @@ namespace local_prometheus;
 
 use coding_exception;
 use Iterator;
-use moodle_exception;
 
 /**
  * A single measurable feature of the application.
@@ -115,6 +114,15 @@ class metric implements Iterator {
     }
 
     /**
+     * This metric's values / dimensions
+     *
+     * @return metric_value[]
+     */
+    final public function get_values(): array {
+        return $this->dimensions;
+    }
+
+    /**
      * Adds a new dimension to the metric
      *
      * @param metric_value $dimension
@@ -127,7 +135,7 @@ class metric implements Iterator {
     /**
      * Formats the metric to be output as a string
      *
-     * @param array $sharedlabels List of shared labels for all values
+     * @param array{string: string} $sharedlabels List of shared labels for all values
      * @return string
      */
     public function output(array $sharedlabels = []): string {

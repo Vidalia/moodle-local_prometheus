@@ -59,6 +59,33 @@ class metric_value {
     }
 
     /**
+     * Fetch this value's labels
+     *
+     * @return array{string: string}
+     */
+    public function get_labels(): array {
+        return $this->labels;
+    }
+
+    /**
+     * The actual value
+     *
+     * @return float
+     */
+    public function get_value(): float {
+        return $this->value;
+    }
+
+    /**
+     * This value's timestamp
+     *
+     * @return int|null
+     */
+    public function get_timestamp(): ?int {
+        return $this->timestamp;
+    }
+
+    /**
      * Label names may contain ASCII letters, numbers, as well as underscores.
      * Label values may contain any unicode characters
      *
@@ -83,6 +110,7 @@ class metric_value {
     public function output(metric $metric, array $sharedlabels = []): string {
         $output = $metric->get_name();
         $alllabels = array_merge($sharedlabels, $this->labels);
+        ksort($alllabels);
 
         if (!empty($alllabels)) {
             // Format the labels as key="value", and join them with a comma.

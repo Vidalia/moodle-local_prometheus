@@ -71,7 +71,7 @@ class gatherer {
     /**
      * Fetches shared labels that should be merged into all metrics
      *
-     * @return array key => value pairs of shared labels
+     * @return array{string: string} key => value pairs of shared labels
      */
     final protected function get_shared_labels(): array {
         global $SITE, $CFG;

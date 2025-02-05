@@ -34,15 +34,29 @@ global $DB, $CFG, $SITE;
 $authtoken = get_config('local_prometheus', 'token');
 $tokenauthenabled = !empty($authtoken);
 
-$token = $tokenauthenabled
-    ? optional_param('token', '', PARAM_BASE64)
-    : required_param('token', PARAM_BASE64);
+try {
+    $token = $tokenauthenabled
+        ? required_param('token', PARAM_BASE64)
+        : optional_param('token', '', PARAM_BASE64);
+} catch (moodle_exception $exception) {
+    if ($exception->errorcode !== 'missingparam' && $exception->a !== 'token') {
+        throw $exception;
+    } else if (BEHAT_SITE_RUNNING) {
+        echo "BEHAT: No token specified.\n";
+        exit;
+    } else {
+        throw $exception;
+    }
+}
 
-$timeframe = optional_param('timeframe', 60 * 5, PARAM_INT);
-
-$cutoff = time() - $timeframe;
+$cutoff = optional_param('timeframe', 60 * 5, PARAM_INT);
 
 if ($tokenauthenabled && $token !== $authtoken) {
+    if (BEHAT_SITE_RUNNING) {
+        echo "BEHAT: Token authentication failed.\n";
+        exit;
+    }
+
     http_response_code(403);
     exit;
 }
@@ -50,5 +64,4 @@ if ($tokenauthenabled && $token !== $authtoken) {
 header('Content-Type: text/plain');
 
 $gatherer = new gatherer();
-
 echo $gatherer->output($cutoff);

@@ -67,4 +67,104 @@ final class metric_test extends basic_testcase {
         ];
     }
 
+    /**
+     * Verifies that a metric can be output in the prometheus format
+     *
+     * @covers       \local_prometheus\metric::output
+     * @dataProvider metric_output_provider
+     *
+     * @param string $name Metric name
+     * @param string $type Metric type
+     * @param string $help Optional help text
+     * @param metric_value[] $values List of values
+     * @param array{string: string} $labels Shared labels
+     * @param string $expected Expected output
+     * @return void
+     */
+    public function test_metric_output(string $name,
+                                       string $type,
+                                       string $help,
+                                       array  $values,
+                                       array  $labels,
+                                       string $expected): void {
+
+        $metric = new metric($name, $type, $help);
+        array_walk($values, $metric->add_value(...));
+
+        // Line endings are significant. We want to be able to see the line endings in the dataprovider,
+        // but we don't want to faff about mixing ending types in the same file.
+        $expected = str_replace("\r\n", "\n", $expected);
+
+        $this->assertEquals($expected, $metric->output($labels));
+    }
+
+    /**
+     * Data provider for {@see test_metric_output}
+     *
+     * @return array{string: array}
+     */
+    public function metric_output_provider(): array {
+        return [
+            'simple gauge' => [
+                'name' => 'test_simple_gauge', 'type' => metric::TYPE_GAUGE, 'help' => '',
+                'values' => [ new metric_value([], 1) ],
+                'labels' => [],
+                'expected' => <<<PROMETHEUS
+# TYPE test_simple_gauge gauge
+test_simple_gauge 1
+PROMETHEUS,
+            ],
+            'gauge, with help text' => [
+                'name' => 'test_simple_gauge_withhelp', 'type' => metric::TYPE_GAUGE,
+                'help' => 'This metric has a description',
+                'values' => [ new metric_value([], 1) ],
+                'labels' => [],
+                'expected' => <<<PROMETHEUS
+# HELP test_simple_gauge_withhelp This metric has a description
+# TYPE test_simple_gauge_withhelp gauge
+test_simple_gauge_withhelp 1
+PROMETHEUS,
+            ],
+            'gauge, with shared labels' => [
+                'name' => 'test_gauge_withlabel', 'type' => metric::TYPE_GAUGE, 'help' => '',
+                'values' => [ new metric_value([], 1) ],
+                'labels' => [ 'label' => 'value' ],
+                'expected' => <<<PROMETHEUS
+# TYPE test_gauge_withlabel gauge
+test_gauge_withlabel{label="value"} 1
+PROMETHEUS,
+            ],
+            'gauge with multiple values' => [
+                'name' => 'multi_gauge', 'type' => metric::TYPE_GAUGE, 'help' => '',
+                'values' => [
+                    new metric_value(['item' => 'one'], 1),
+                    new metric_value(['item' => 'two'], 2),
+                ],
+                'labels' => [],
+                'expected' => <<<PROMETHEUS
+# TYPE multi_gauge gauge
+multi_gauge{item="one"} 1
+multi_gauge{item="two"} 2
+PROMETHEUS,
+            ],
+            'counter with everything' => [
+                'name' => 'multi_counter', 'type' => metric::TYPE_COUNTER,
+                'help' => 'Here\'s a description',
+                'values' => [
+                    new metric_value(['item' => 'one'], 1),
+                    new metric_value(['item' => 'two'], 2),
+                    new metric_value(['item' => 'three', 'zoo' => 'closed' ], 3),
+                ],
+                'labels' => [ 'shared' => 'label' ],
+                'expected' => <<<PROMETHEUS
+# HELP multi_counter Here's a description
+# TYPE multi_counter counter
+multi_counter{item="one",shared="label"} 1
+multi_counter{item="two",shared="label"} 2
+multi_counter{item="three",shared="label",zoo="closed"} 3
+PROMETHEUS,
+            ],
+        ];
+    }
+
 }
